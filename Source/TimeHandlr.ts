@@ -17,15 +17,15 @@ interface ITimeHandlrSettings {
 
     /**
      * Key to check for a callback before a cycle starts in objects (by default,
-     * "onSpriteCycleStart").
+     * "onClassCycleStart").
      */
-    keyOnSpriteCycleStart?: string;
+    keyOnClassCycleStart?: string;
 
     /**
      * Key to check for a callback after a cycle starts in objects (by default,
-     * "doSpriteCycleStart").
+     * "doClassCycleStart").
      */
-    keyDoSpriteCycleStart?: string;
+    keyDoClassCycleStart?: string;
 
     /**
      * Optional attribute to check for whether a cycle may be given to an 
@@ -34,7 +34,7 @@ interface ITimeHandlrSettings {
     keyCycleCheckValidity?: string;
 
     /**
-     * Whether a copy of settings should be made in setSpriteCycle.
+     * Whether a copy of settings should be made in setClassCycle.
      */
     copyCycleSettings?: boolean;
 
@@ -139,12 +139,12 @@ class TimeHandlr {
     /**
      * Key to check for a callback before a cycle starts in objects.
      */
-    keyOnSpriteCycleStart: string;
+    keyOnClassCycleStart: string;
 
     /**
      * Key to check for a callback after a cycle starts in objects.
      */
-    keyDoSpriteCycleStart: string;
+    keyDoClassCycleStart: string;
 
     /**
      * Optional attribute to check for whether a cycle may be given to an 
@@ -153,7 +153,7 @@ class TimeHandlr {
     keyCycleCheckValidity: string;
 
     /**
-     * Whether a copy of settings should be made in setSpriteCycle.
+     * Whether a copy of settings should be made in setClassCycle.
      */
     copyCycleSettings: boolean;
 
@@ -178,8 +178,8 @@ class TimeHandlr {
 
         this.keyCycles = settings.keyCycles || "cycles";
         this.keyClassName = settings.keyClassName || "className";
-        this.keyOnSpriteCycleStart = settings.keyOnSpriteCycleStart || "onSpriteCycleStart";
-        this.keyDoSpriteCycleStart = settings.keyDoSpriteCycleStart || "doSpriteCycleStart";
+        this.keyOnClassCycleStart = settings.keyOnClassCycleStart || "onClassCycleStart";
+        this.keyDoClassCycleStart = settings.keyDoClassCycleStart || "doClassCycleStart";
         this.keyCycleCheckValidity = settings.keyCycleCheckValidity;
 
         this.copyCycleSettings = typeof settings.copyCycleSettings === "undefined" ? true : settings.copyCycleSettings;
@@ -317,7 +317,7 @@ class TimeHandlr {
      *     [ "dim", "medium", "high", "high", "medium", "dim" ]
      * );
      * 
-     * @todo Rearrange this and setSpriteCycle to remove the "thing" argument.
+     * @todo Rearrange this and setClassCycle to remove the "thing" argument.
      */
     addEventIntervalSynched(callback: IEventCallback, timeDelay: number, numRepeats: number, thing: any, settings: any): IEvent {
         var calcTime: number = timeDelay * settings.length,
@@ -481,14 +481,14 @@ class TimeHandlr {
      *                         Function (for variable cycle speeds).
      * @example
      * // Adding a sprite cycle for a Mario-style block.
-     * TimeHandler.classAddCycle(
+     * TimeHandler.addClassCycle(
      *     { "thing": "Block", "spriteNum": 0 },
      *     [ "dim", "medium", "high", "high", "medium", "dim" ],
      *     "glowing",
      *     7
      * );
      */
-    classAddCycle(thing: any, settings: any, name: string, timing: number | Function): ITimeCycle {
+    addClassCycle(thing: any, settings: any, name: string, timing: number | Function): ITimeCycle {
         var isTimingFunction: boolean = typeof timing === "function",
             cycle: ITimeCycle;
 
@@ -503,7 +503,7 @@ class TimeHandlr {
         name = name || "0";
 
         // Set the cycle under thing[keyCycles][name]
-        cycle = thing[this.keyCycles][name] = this.setSpriteCycle(
+        cycle = thing[this.keyCycles][name] = this.setClassCycle(
             thing,
             settings,
             isTimingFunction ? 0 : timing
@@ -539,15 +539,17 @@ class TimeHandlr {
      *                         Function (for variable cycle speeds).
      * @example
      * // Adding a sprite cycle for a Mario-style block.
-     * TimeHandler.classAddCycleSynched(
+     * TimeHandler.addClassCycleSynched(
      *     { "thing": "Block", "spriteNum": 0 },
      *     [ "dim", "medium", "high", "high", "medium", "dim" ],
      *     "glowing",
      *     7
      * );
      */
-    classAddCycleSynched(thing: any, settings: any, name: string, timing: number | Function): ITimeCycle {
+    addClassCycleSynched(thing: any, settings: any, name: string, timing: number | Function): ITimeCycle {
         var cycle: ITimeCycle;
+
+        console.log("Adding", thing.title, settings, name, timing);
 
         // Make sure the object has a holder for keyCycles...
         if (!thing[this.keyCycles]) {
@@ -559,7 +561,7 @@ class TimeHandlr {
 
         // Set the cycle under thing[keyCycles][name]
         name = name || "0";
-        cycle = thing[this.keyCycles][name] = this.setSpriteCycle(thing, settings, timing, true);
+        cycle = thing[this.keyCycles][name] = this.setClassCycle(thing, settings, timing, true);
 
         // Immediately run the first class cycle, then return
         this.cycleClass(thing, thing[this.keyCycles][name]);
@@ -584,8 +586,9 @@ class TimeHandlr {
      *                              other cycles of the same period, based on 
      *                              modulo of current time (by default, false).
      */
-    private setSpriteCycle(thing: any, settings: any, timing: number | Function, synched: boolean = false): ITimeCycle {
-        var callback: IEventCallback;
+    private setClassCycle(thing: any, settings: any, timing: number | Function, synched: boolean = false): ITimeCycle {
+        var scope: TimeHandlr = this,
+            callback: IEventCallback;
 
         // If required, make a copy of settings so if multiple objects are made
         // with the same settings, object, they don't override each other's
@@ -597,15 +600,17 @@ class TimeHandlr {
         // Start off before the beginning of the cycle
         settings.loc = settings.oldclass = -1;
 
-        // Let the object know to start the cycle when needed
         callback = synched ? this.addEventIntervalSynched : this.addEventInterval;
-        thing[this.keyOnSpriteCycleStart] = function (): void {
-            callback(this.cycleClass, timing || this.timingDefault, Infinity, thing, settings);
+        callback = callback.bind(scope);
+
+        // Let the object know to start the cycle when needed
+        thing[this.keyOnClassCycleStart] = function (): void {
+            callback(scope.cycleClass, timing || scope.timingDefault, Infinity, thing, settings);
         };
 
         // If it should already start, do that
-        if (thing[this.keyDoSpriteCycleStart]) {
-            thing[this.keyOnSpriteCycleStart]();
+        if (thing[this.keyDoClassCycleStart]) {
+            thing[this.keyOnClassCycleStart]();
         }
 
         return settings;
