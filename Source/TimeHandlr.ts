@@ -50,11 +50,6 @@ interface ITimeHandlrSettings {
 }
 
 interface IEvent {
-    // The callback to be run when this event is triggered (which will normally
-    // be when the container TimeHandlr's internal time is equal to this event's
-    // key in the events container).
-    callback(...args: any[]): IEventCallback;
-
     // The time at which to call this event
     // @todo Rename to time?
     timeDelay: number;
@@ -75,6 +70,11 @@ interface IEvent {
     // A Function to run on the Event whenever it's handled in handleEvents,
     // commonly used to change repeat.
     count_changer?: IEventCallback;
+
+    // The callback to be run when this event is triggered (which will normally
+    // be when the container TimeHandlr's internal time is equal to this event's
+    // key in the events container).
+    callback(...args: any[]): IEventCallback;
 }
 
 interface IEventCallback {
@@ -198,36 +198,12 @@ class TimeHandlr {
     getTime(): number {
         return this.time;
     }
-    
+
     /**
      * @return {Object} The catalog of events, keyed by their time triggers.
      */
     getEvents(): IEventsContainer {
         return this.events;
-    }
-
-    /**
-     * Basic factory for Events.
-     * 
-     * @constructor
-     * @param {Function} callback   The callback to be run when time is equal to
-     *                              this event's key in events.
-     * @param {Number} timeDelay   The time at which to call this event.
-     * @param {Number} timeRepeat   How long between calls (irrelevant if repeat
-     *                              is 1, but useful for re-adding).
-     * @param {Array} args   Arguments for the callback to be run with.
-     * @param {Number} repeat   How many times this should repeat. Infinity is
-     *                          an acceptable option.
-     */
-    createEvent(callback: IEventCallback, timeDelay: number, timeRepeat: number, args: any[], repeat: number) {
-        return {
-            "callback": callback,
-            "timeDelay": timeDelay,
-            "timeRepeat": timeRepeat,
-            "args": args,
-            "repeat": repeat,
-            "count": 0
-        };
     }
 
 
@@ -247,9 +223,9 @@ class TimeHandlr {
      * TimeHandler.addEvent(console.log.bind(console, "Hello"), 7);
      * TimeHandler.addEvent(console.log.bind(console), 7, "world!");
      */
-    addEvent(callback: IEventCallback, timeDelay: number = 1, ...args: any[]) {
+    addEvent(callback: IEventCallback, timeDelay: number = 1, ...args: any[]): IEvent {
         var event: IEvent;
-        
+
         // Make sure callback is actually a function
         if (typeof callback !== "function") {
             throw new Error("Invalid event given to addEvent.");
@@ -263,7 +239,7 @@ class TimeHandlr {
 
         return event;
     }
-    
+
     /**
      * Adds an event in a manner similar to setInterval, though any arguments
      * past the numRepeats will be passed to the event callback. The added event
@@ -305,7 +281,7 @@ class TimeHandlr {
 
         return event;
     }
-    
+
     /**
      * Fancy wrapper around this.addEventInterval. It delays starting the event
      * until the current time is modular with the repeat delay, so that all 
@@ -343,16 +319,16 @@ class TimeHandlr {
      * 
      * @todo Rearrange this and setSpriteCycle to remove the "thing" argument.
      */
-    addEventIntervalSynched(callback: IEventCallback, timeDelay: number, numRepeats: number, thing: any, settings: any) {
-        var calctime = timeDelay * settings.length,
-            entryTime = Math.ceil(this.time / calctime) * calctime,
-            scope = self,
-            args = Array.prototype.slice.call(arguments),
-            adder = Function.apply.bind(this.addEventInterval, scope, args);
+    addEventIntervalSynched(callback: IEventCallback, timeDelay: number, numRepeats: number, thing: any, settings: any): IEvent {
+        var calcTime: number = timeDelay * settings.length,
+            entryTime: number = Math.ceil(this.time / calcTime) * calcTime,
+            scope: TimeHandlr = this,
+            args: any[] = Array.prototype.slice.call(arguments),
+            adder: IEventCallback = Function.apply.bind(this.addEventInterval, scope, args);
 
         timeDelay = timeDelay || 1;
         numRepeats = numRepeats || 1;
-        
+
         // If there's no difference in times, you're good to go
         if (entryTime === this.time) {
             return adder();
@@ -362,7 +338,7 @@ class TimeHandlr {
         this.addEvent(adder, entryTime - this.time, scope, args, thing);
     }
 
-    
+
     /* General event handling
     */
 
@@ -379,12 +355,12 @@ class TimeHandlr {
 
         this.time += 1;
         currentEvents = this.events[this.time];
-        
+
         // If there isn't anything to run, don't even bother
         if (!currentEvents) {
             return;
         }
-        
+
         // For each event currently scheduled:
         for (i = 0, length = currentEvents.length; i < length; ++i) {
             event = currentEvents[i];
@@ -398,7 +374,7 @@ class TimeHandlr {
                 if (event.count_changer) {
                     event.count_changer(event);
                 }
-            
+
                 // If repeat is a Function, running it determines whether to repeat
                 if (event.repeat.constructor === Function) {
                     // This is where the event's callback is actually run!
@@ -446,7 +422,7 @@ class TimeHandlr {
      * @param {String} name   The name of the cycle to be cancelled.
      */
     cancelClassCycle(thing: any, name: string): void {
-        var cycle;
+        var cycle: ITimeCycle;
 
         if (!thing[this.keyCycles] || !thing[this.keyCycles][name]) {
             return;
@@ -482,7 +458,7 @@ class TimeHandlr {
         }
     }
 
-    
+
     /* Sprite keyCycles
     */
 
@@ -513,9 +489,9 @@ class TimeHandlr {
      * );
      */
     classAddCycle(thing: any, settings: any, name: string, timing: number | Function): ITimeCycle {
-        var isTimingFunction = typeof timing === "function",
+        var isTimingFunction: boolean = typeof timing === "function",
             cycle: ITimeCycle;
-        
+
         // Make sure the object has a holder for keyCycles...
         if (!thing[this.keyCycles]) {
             thing[this.keyCycles] = {};
@@ -572,7 +548,7 @@ class TimeHandlr {
      */
     classAddCycleSynched(thing: any, settings: any, name: string, timing: number | Function): ITimeCycle {
         var cycle: ITimeCycle;
-        
+
         // Make sure the object has a holder for keyCycles...
         if (!thing[this.keyCycles]) {
             thing[this.keyCycles] = {};
@@ -608,9 +584,9 @@ class TimeHandlr {
      *                              other cycles of the same period, based on 
      *                              modulo of current time (by default, false).
      */
-    private setSpriteCycle(thing: any, settings: any, timing: number | Function, synched = false): ITimeCycle {
-        var callback;
-    
+    private setSpriteCycle(thing: any, settings: any, timing: number | Function, synched: boolean = false): ITimeCycle {
+        var callback: IEventCallback;
+
         // If required, make a copy of settings so if multiple objects are made
         // with the same settings, object, they don't override each other's
         // attributes: particularly settings.loc.
@@ -623,7 +599,7 @@ class TimeHandlr {
 
         // Let the object know to start the cycle when needed
         callback = synched ? this.addEventIntervalSynched : this.addEventInterval;
-        thing[this.keyOnSpriteCycleStart] = function () {
+        thing[this.keyOnSpriteCycleStart] = function (): void {
             callback(this.cycleClass, timing || this.timingDefault, Infinity, thing, settings);
         };
 
@@ -651,7 +627,7 @@ class TimeHandlr {
     private cycleClass(thing: any, settings: any): boolean {
         var current: boolean | string | ((...args: any[]) => string | boolean),
             name: string | boolean;
-        
+
         // If anything has been invalidated, return true to stop
         if (!thing || !settings || !settings.length || (this.keyCycleCheckValidity && !thing[this.keyCycleCheckValidity])) {
             return true;
@@ -667,7 +643,7 @@ class TimeHandlr {
 
         // Current is the sprite, bool, or function currently added and/or run
         current = settings[settings.loc];
-        
+
         // If it isn't falsy, (run if needed and) set it as the next name
         if (current) {
             if (current.constructor === Function) {
@@ -690,11 +666,35 @@ class TimeHandlr {
             return (current === false);
         }
     }
-    
+
 
     /* Utility functions
     */
-    
+
+    /**
+     * Basic factory for Events.
+     * 
+     * @constructor
+     * @param {Function} callback   The callback to be run when time is equal to
+     *                              this event's key in events.
+     * @param {Number} timeDelay   The time at which to call this event.
+     * @param {Number} timeRepeat   How long between calls (irrelevant if repeat
+     *                              is 1, but useful for re-adding).
+     * @param {Array} args   Arguments for the callback to be run with.
+     * @param {Number} repeat   How many times this should repeat. Infinity is
+     *                          an acceptable option.
+     */
+    private createEvent(callback: IEventCallback, timeDelay: number, timeRepeat: number, args: any[], repeat: number): IEvent {
+        return {
+            "callback": callback,
+            "timeDelay": timeDelay,
+            "timeRepeat": timeRepeat,
+            "args": args,
+            "repeat": repeat,
+            "count": 0
+        };
+    }
+
     /**
      * Quick handler to add an event to events at a particular time. If the time
      * doesn't have any events listed, a new Array is made to hold this event.
@@ -702,7 +702,7 @@ class TimeHandlr {
      * @param {Event} event
      * @param {Number} time
      */
-    private insertEvent(event: IEvent, time: number) {
+    private insertEvent(event: IEvent, time: number): IEvent[] {
         if (!this.events[time]) {
             this.events[time] = [event];
         } else {
@@ -718,7 +718,7 @@ class TimeHandlr {
      * 
      * @param {Mixed} original
      */
-    makeSettingsCopy(original: any): any {
+    private makeSettingsCopy(original: any): any {
         var output: any = new original.constructor(),
             i: string;
 
@@ -737,8 +737,8 @@ class TimeHandlr {
      * @param {Mixed} element   The element whose class is being modified.
      * @param {String} str   The String to be added to the thing's class.
      */
-    private classAddGeneric(element: any, str: string) {
-        element[this.keyClassName] += ' ' + str;
+    private classAddGeneric(element: any, str: string): void {
+        element[this.keyClassName] += " " + str;
     }
 
     /**
@@ -747,8 +747,8 @@ class TimeHandlr {
      * @param {Mixed} element   The element whose class is being modified.
      * @param {String} str   The String to be removed from the thing's class.
      */
-    private classRemoveGeneric(element: any, str: string) {
-        element[this.keyClassName] = element[this.keyClassName].replace(str, '');
+    private classRemoveGeneric(element: any, str: string): void {
+        element[this.keyClassName] = element[this.keyClassName].replace(str, "");
     }
 
 }
