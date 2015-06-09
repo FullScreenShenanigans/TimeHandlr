@@ -1,107 +1,7 @@
+/// <reference path="TimeHandlr.d.ts" />
+
 module TimeHandlr {
     "use strict";
-
-    export interface ITimeHandlrSettings {
-        /**
-         * The default time separation between events in cycles (by default, 1).
-         */
-        timingDefault?: number;
-
-        /**
-         * Attribute name to store listings of cycles in objects (by default, 
-         * "cycles").
-         */
-        keyCycles?: string;
-
-        /**
-         * Atribute name to store class name in objects (by default, "className").
-         */
-        keyClassName?: string;
-
-        /**
-         * Key to check for a callback before a cycle starts in objects (by default,
-         * "onClassCycleStart").
-         */
-        keyOnClassCycleStart?: string;
-
-        /**
-         * Key to check for a callback after a cycle starts in objects (by default,
-         * "doClassCycleStart").
-         */
-        keyDoClassCycleStart?: string;
-
-        /**
-         * Optional attribute to check for whether a cycle may be given to an 
-         * object (if not given, ignored).
-         */
-        keyCycleCheckValidity?: string;
-
-        /**
-         * Whether a copy of settings should be made in setClassCycle.
-         */
-        copyCycleSettings?: boolean;
-
-        /**
-         * Function to add a class to a Thing (by default, String concatenation).
-         */
-        classAdd?: IClassChanger;
-
-        /**
-         * Function to remove a class from a Thing (by default, String removal).
-         */
-        classRemove?: IClassChanger;
-    }
-
-    export interface IEvent {
-        // The time at which to call this event
-        // @todo Rename to time?
-        timeDelay: number;
-
-        // Arguments for the callback to be run with.
-        args: any[];
-
-        // How many times this should repeat. Infinity is an acceptable option.
-        repeat: number | IEventCallback;
-
-        // How many times this event has been called.
-        count?: number;
-
-        // How long between calls (irrelevant if repeat is 1, but useful for
-        // re-adding).
-        timeRepeat?: number;
-
-        // A Function to run on the Event whenever it's handled in handleEvents,
-        // commonly used to change repeat.
-        count_changer?: IEventCallback;
-
-        // The callback to be run when this event is triggered (which will normally
-        // be when the container TimeHandlr's internal time is equal to this event's
-        // key in the events container).
-        callback(...args: any[]): IEventCallback;
-    }
-
-    export interface IEventCallback {
-        (...args: any[]): any;
-        event?: IEvent;
-    }
-
-    export interface IEventsContainer {
-        [i: string]: [IEvent];
-        [i: number]: [IEvent];
-    }
-
-    export interface ITimeCycle {
-        length: number;
-        event: any;
-    }
-
-    export interface ITimeCycles {
-        [i: string]: ITimeCycle
-    }
-
-    export interface IClassChanger {
-        (thing: any, className: string): void;
-    }
 
     /**
      * A timed events library intended to provide a flexible alternative to 
@@ -110,68 +10,66 @@ module TimeHandlr {
      * and can be set to repeat a number of times determined by a number or callback
      * Function. Functionality to automatically "cycle" between certain classes of
      * an Object is also provided, similar to jQuery's class toggling.
-     * 
-     * @author "Josh Goldberg" <josh@fullscreenmario.com>
      */
-    export class TimeHandlr {
+    export class TimeHandlr implements ITimeHandlr {
         /**
          * The current (most recently reached) game time.
          */
-        time: number;
+        private time: number;
 
         /**
          * Lookup table of all events yet to be triggered, keyed by their time.
          */
-        events: IEventsContainer;
+        private events: IEventsContainer;
 
         /**
          * The default time separation between events in cycles.
          */
-        timingDefault: number;
+        private timingDefault: number;
 
         /**
          * Attribute name to store listings of cycles in objects.
          */
-        keyCycles: string;
+        private keyCycles: string;
 
         /**
          * Attribute name to store class name in objects.
          */
-        keyClassName: string;
+        private keyClassName: string;
 
         /**
          * Key to check for a callback before a cycle starts in objects.
          */
-        keyOnClassCycleStart: string;
+        private keyOnClassCycleStart: string;
 
         /**
          * Key to check for a callback after a cycle starts in objects.
          */
-        keyDoClassCycleStart: string;
+        private keyDoClassCycleStart: string;
 
         /**
          * Optional attribute to check for whether a cycle may be given to an 
          * object.
          */
-        keyCycleCheckValidity: string;
+        private keyCycleCheckValidity: string;
 
         /**
          * Whether a copy of settings should be made in setClassCycle.
          */
-        copyCycleSettings: boolean;
+        private copyCycleSettings: boolean;
 
         /**
          * Function to add a class to a Thing.
          */
-        classAdd: IClassChanger;
+        private classAdd: IClassChanger;
 
         /**
          * Function to remove a class from a Thing.
          */
-        classRemove: IClassChanger;
+        private classRemove: IClassChanger;
 
         /**
-         * 
+         * @param {ITimeHandlrSettings} settings
          */
         constructor(settings: ITimeHandlrSettings) {
             this.time = 0;
@@ -221,10 +119,6 @@ module TimeHandlr {
          * @param {Function} callback   The callback to be run after some time.
          * @param {Number} [timeDelay]   How long from now to run the callback (by
          *                               default, 1).
-         * @example
-         * // Scheduling a console log 7 steps in the future two different ways.
-         * TimeHandler.addEvent(console.log.bind(console, "Hello"), 7);
-         * TimeHandler.addEvent(console.log.bind(console), 7, "world!");
          */
         addEvent(callback: IEventCallback, timeDelay: number = 1, ...args: any[]): IEvent {
             var event: IEvent;
@@ -256,14 +150,10 @@ module TimeHandlr {
          *                               default).
          * @param {Number} [numRepeats]   How many times to run the event. Infinity
          *                                is an acceptable option (1 by default).
-         * @example 
-         * // Scheduling console logs 1ms apart 7 times, two different ways.
-         * TimeHandler.addEventInterval(console.log.bind(console, "Hello"), 1, 7);
-         * TimeHandler.addEventInterval(console.log.bind(console), 1, 7, "world!");
          */
-        addEventInterval(callback: IEventCallback, timeDelay: number = 1, numRepeats: number = 1): IEvent {
+        addEventInterval(callback: IEventCallback, timeDelay: number = 1, numRepeats: number = 1, ...args: any[]): IEvent {
             var event: IEvent,
-                args: any[];
+                argsParsed: any[];
 
             // Make sure callback is actually a function
             if (typeof callback !== "function") {
@@ -274,11 +164,11 @@ module TimeHandlr {
             numRepeats = numRepeats || 1;
 
             // Arguments exclude callback, timeDelay, and numRepeats
-            args = Array.prototype.slice.call(arguments, 3);
+            argsParsed = Array.prototype.slice.call(arguments, 3);
 
             // Add the event to events, then return it
             // It may need to have a reference to the event from the function
-            event = this.createEvent(callback, this.time + timeDelay, timeDelay, args, numRepeats);
+            event = this.createEvent(callback, this.time + timeDelay, timeDelay, argsParsed, numRepeats);
             callback.event = event;
             this.insertEvent(event, event.timeDelay);
 
@@ -307,18 +197,6 @@ module TimeHandlr {
          *                           In the block example, this would be an Array
          *                           containing the ordered sprite names of the 
          *                           block (dim, medium, etc.).
-         * @example
-         * // Adding a synched sprite cycle for a Mario-style block.
-         * TimeHandler.addEventIntervalSynched(
-         *     function (thing, sprites) {
-         *         console.log("Should be", sprites[thing.spriteNum]);
-         *         thing.spriteNum = (thing.spriteNum += 1) % sprites.length;
-         *     },
-         *     7,
-         *     Infinity,
-         *     { "thing": "Block", "spriteNum": 0 },
-         *     [ "dim", "medium", "high", "high", "medium", "dim" ]
-         * );
          * 
          * @todo Rearrange this and setClassCycle to remove the "thing" argument.
          */
@@ -350,7 +228,7 @@ module TimeHandlr {
          * the new time. For each event, its callback is run, and if that returned
          * true, or the event's .repeat Number runs out, the event stops repeating.
          */
-        handleEvents(): any {
+        handleEvents(): void {
             var currentEvents: IEvent[],
                 event: IEvent,
                 length: number,
@@ -482,14 +360,6 @@ module TimeHandlr {
          * @param {Mixed} timing   The way to determine how often to do the cycle.
          *                         This is normally a Number, but can also be a 
          *                         Function (for variable cycle speeds).
-         * @example
-         * // Adding a sprite cycle for a Mario-style block.
-         * TimeHandler.addClassCycle(
-         *     { "thing": "Block", "spriteNum": 0 },
-         *     [ "dim", "medium", "high", "high", "medium", "dim" ],
-         *     "glowing",
-         *     7
-         * );
          */
         addClassCycle(thing: any, settings: any, name: string, timing: number | Function): ITimeCycle {
             var isTimingFunction: boolean = typeof timing === "function",
@@ -540,14 +410,6 @@ module TimeHandlr {
          * @param {Mixed} timing   The way to determine how often to do the cycle.
          *                         This is normally a Number, but can also be a 
          *                         Function (for variable cycle speeds).
-         * @example
-         * // Adding a sprite cycle for a Mario-style block.
-         * TimeHandler.addClassCycleSynched(
-         *     { "thing": "Block", "spriteNum": 0 },
-         *     [ "dim", "medium", "high", "high", "medium", "dim" ],
-         *     "glowing",
-         *     7
-         * );
          */
         addClassCycleSynched(thing: any, settings: any, name: string, timing: number | Function): ITimeCycle {
             var cycle: ITimeCycle;
