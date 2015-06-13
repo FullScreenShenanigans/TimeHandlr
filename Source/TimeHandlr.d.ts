@@ -74,30 +74,42 @@ declare module TimeHandlr {
     }
 
     export interface IEvent {
-        // The time at which to call this event
-        // @todo Rename to time?
+        /**
+         * The time at which to call this event (which might be renamed to time).
+         */
         timeDelay: number;
 
-        // Arguments for the callback to be run with.
+        /**
+         * Arguments to be passed to the event callback.
+         */
         args: any[];
 
-        // How many times this should repeat. Infinity is an acceptable option.
+        /**
+         * How many times this should repeat. Infinity is an acceptable option.
+         */
         repeat: number | IEventCallback;
 
-        // How many times this event has been called.
+        /**
+         * How many times this event has been called.
+         */
         count?: number;
 
-        // How long between calls (irrelevant if repeat is 1, but useful for
-        // re-adding).
+        /**
+         * How long between calls (irrelevant if repeat is 1, but useful for re-adding).
+         */
         timeRepeat?: number;
 
-        // A Function to run on the Event whenever it's handled in handleEvents,
-        // commonly used to change repeat.
+        /**
+         * A Function to run on the Event whenever it's handled in handleEvents,
+         * commonly used to change repeat.
+         */
         count_changer?: IEventCallback;
 
-        // The callback to be run when this event is triggered (which will normally
-        // be when the container TimeHandlr's internal time is equal to this event's
-        // key in the events container).
+        /**
+         * The callback to be run when this event is triggered (which will normally
+         * be when the container TimeHandlr's internal time is equal to this event's
+         * key in the events container).
+         */
         callback(...args: any[]): IEventCallback;
     }
 
@@ -114,7 +126,5 @@ declare module TimeHandlr {
         cancelAllCycles(thing: any);
         addClassCycle(thing: any, settings: any, name: string, timing: Number | Function): ITimeCycle;
         addClassCycleSynched(thing: any, settings: any, name: string, timing: Number | Function): ITimeCycle;
-
-
     }
 }

@@ -1,4 +1,8 @@
+// @ifdef INCLUDE_DEFINITIONS
 /// <reference path="TimeHandlr.d.ts" />
+// @endif
+
+// @include ../Source/TimeHandlr.d.ts
 
 module TimeHandlr {
     "use strict";
