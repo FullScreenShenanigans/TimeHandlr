@@ -196,7 +196,7 @@ module TimeHandlr {
 
         /**
          * Adds a sprite cycle (settings) for a thing, to be referenced by the given
-         * name in the thing's keyCycles Object. The sprite cycle switches the thing's
+         * name in the thing's cycles Object. The sprite cycle switches the thing's
          * class using classAdd and classRemove (which can be given by the user in
          * reset, but default to internally defined Functions).
          * 
@@ -223,8 +223,8 @@ module TimeHandlr {
 
         /**
          * Adds a synched sprite cycle (settings) for a thing, to be referenced by
-         * the given name in the thing's keyCycles Object, and in tune with all other
-         * keyCycles of the same period. The sprite cycle switches the thing's class 
+         * the given name in the thing's cycles Object, and in tune with all other
+         * cycles of the same period. The sprite cycle switches the thing's class 
          * using classAdd and classRemove (which can be given by the user in reset,
          * but default to internally defined Functions).
          * 
@@ -234,7 +234,7 @@ module TimeHandlr {
          * @param timing   A way to determine how often to do the cycle.
          */
         addClassCycleSynched(thing: IThing, settings: ISyncSettings, name: string, timing: number | INumericCalculator): ISyncSettings {
-            // Make sure the object has a holder for keyCycles...
+            // Make sure the object has a holder for cycles...
             if (!thing[this.keyCycles]) {
                 thing[this.keyCycles] = {};
             }
@@ -327,7 +327,7 @@ module TimeHandlr {
 
         /**
          * Cancels the class cycle of a thing by finding the cycle under the thing's
-         * keyCycles and making it appear to be empty.
+         * cycles and making it appear to be empty.
          * 
          * @param thing   The thing whose cycle is to be cancelled.
          * @param name   The name of the cycle to be cancelled.
@@ -346,7 +346,7 @@ module TimeHandlr {
         }
 
         /**
-         * Cancels all class keyCycles of a thing under the thing's sycles.
+         * Cancels all class cycles of a thing under the thing's sycles.
          * 
          * @param thing   The thing whose cycles are to be cancelled.
          */
@@ -372,7 +372,7 @@ module TimeHandlr {
         */
 
         /**
-         * Initialization utility for sprite keyCycles of things. The settings are 
+         * Initialization utility for sprite cycles of things. The settings are 
          * added at the right time (immediately if not synched, or on a delay if 
          * synched).
          * 

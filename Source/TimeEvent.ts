@@ -57,27 +57,27 @@ module TimeHandlr {
         }
 
         /**
-         * Set the next call time using timeRepeat.
-         * 
-         * @returns The new call time.
-         */
-        scheduleNextRepeat(): number {
-            return this.time += TimeEvent.runCalculator(this.timeRepeat);
-        }
-
-        /**
          * Computes a value as either a raw Number or a Function.
          * 
          * @param value   The value to be computed.
          * @param args   Any additional arguments, if value is a Function.
          * @returns A numeric equivalent of the value.
          */
-        public static runCalculator(value: number | INumericCalculator, ...args: any[]): number {
+        static runCalculator(value: number | INumericCalculator, ...args: any[]): number {
             if (value.constructor === Number) {
                 return <number>value;
             } else {
                 return (<INumericCalculator>value)(...args);
             }
+        }
+
+        /**
+         * Set the next call time using timeRepeat.
+         * 
+         * @returns The new call time.
+         */
+        scheduleNextRepeat(): number {
+            return this.time += TimeEvent.runCalculator(this.timeRepeat);
         }
     }
 }
