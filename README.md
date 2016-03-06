@@ -78,32 +78,32 @@ internal one that just replaces the string with '' is used).
 
 1. Using a TimeHandler to simulate setTimeout (albeit slowly).
     
-    ```javascript
-    var TimeHandler = new TimeHandlr();
-    TimeHandler.addEvent(console.log.bind(console), 500, "Hello world!");
-    setInterval(TimeHandler.handleEvents);
-    ```
+```javascript
+var TimeHandler = new TimeHandlr();
+TimeHandler.addEvent(console.log.bind(console), 500, "Hello world!");
+setInterval(() => TimeHandler.handleEvents());
+```
     
 2. Using a TimeHandler to simulate setInterval (albeit slowly) seven times.
 
-    ```javascript
-    var TimeHandler = new TimeHandlr();
-    TimeHandler.addEventInterval(
-        console.log.bind(console), 500, 7, "Hello world!"
-    );
-    setInterval(TimeHandler.handleEvents);
-    ```
+```javascript
+var TimeHandler = new TimeHandlr();
+TimeHandler.addEventInterval(
+    console.log.bind(console), 500, 7, "Hello world!"
+);
+setInterval(() => TimeHandler.handleEvents());
+```
 
 3. Using a TimeHandler to continuously toggle an element's class between
    "active" and "hidden" every second.
 
-    ```javascript
-    var TimeHandler = new TimeHandlr();
-    TimeHandler.addClassCycle(
-        document.getElementById("test"),
-        [ "active", "hidden" ],
-        "toggling",
-        1
-    );
-    setInterval(TimeHandler.handleEvents, 1000);
-    ```
+```javascript
+var TimeHandler = new TimeHandlr();
+TimeHandler.addClassCycle(
+    document.getElementById("test"),
+    [ "active", "hidden" ],
+    "toggling",
+    1
+);
+setInterval(() => TimeHandler.handleEvents, 1000);
+```
